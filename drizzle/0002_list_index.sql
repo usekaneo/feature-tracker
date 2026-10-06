@@ -1,0 +1,1 @@
+CREATE INDEX `request_new_idx` ON `request` (`hidden`,`id`);

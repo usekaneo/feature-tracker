@@ -1,0 +1,232 @@
+@import "tailwindcss";
+@source "../";
+
+@font-face {
+  font-family: "Geist";
+  src: url("/assets/geist.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light dark;
+  --c-canvas: #ffffff;
+  --c-ink: #18181b;
+  --c-muted: #71717a;
+  --c-line: #e7e7ea;
+  --c-subtle: #f5f5f6;
+  --c-accent: #4f46e5;
+  --c-danger: #be123c;
+  --logo-dark-display: block;
+  --logo-light-display: none;
+}
+
+/* theme.js sets data-theme; the media query covers visitors without JS. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-canvas: #1c1c1f;
+    --c-ink: #ececee;
+    --c-muted: #a1a1aa;
+    --c-line: #34343a;
+    --c-subtle: #26262a;
+    --c-accent: #8b85ff;
+    --c-danger: #fb7185;
+    --logo-dark-display: none;
+    --logo-light-display: block;
+  }
+}
+:root[data-theme="dark"] {
+  --c-canvas: #1c1c1f;
+  --c-ink: #ececee;
+  --c-muted: #a1a1aa;
+  --c-line: #34343a;
+  --c-subtle: #26262a;
+  --c-accent: #8b85ff;
+  --c-danger: #fb7185;
+  --logo-dark-display: none;
+  --logo-light-display: block;
+}
+
+.kaneo-logo-dark {
+  display: var(--logo-dark-display);
+}
+.kaneo-logo-light {
+  display: var(--logo-light-display);
+}
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --color-canvas: var(--c-canvas);
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --color-subtle: var(--c-subtle);
+  --color-accent: var(--c-accent);
+  --color-danger: var(--c-danger);
+}
+
+@layer base {
+  html {
+    @apply bg-canvas text-ink antialiased;
+    font-feature-settings: "ss01";
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply min-h-dvh text-sm leading-6;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+  summary {
+    @apply cursor-pointer list-none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    @apply size-4 shrink-0 accent-ink;
+  }
+  /* The toggle needs theme.js; hide it until the script has run. */
+  html:not([data-theme]) [data-theme-toggle] {
+    display: none;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex h-10 items-center justify-center gap-1.5 rounded-md border border-line bg-canvas px-3.5 text-sm sm:h-8 sm:px-3 font-medium whitespace-nowrap hover:bg-subtle disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply border-ink bg-ink text-canvas hover:bg-ink hover:opacity-85;
+  }
+  .btn-sm {
+    @apply h-9 px-3 text-sm sm:h-7 sm:px-2.5 sm:text-xs;
+  }
+  .btn-link {
+    @apply relative text-xs text-muted hover:text-ink hover:underline underline-offset-2;
+  }
+  /* Inputs stay at 16px below sm so iOS Safari doesn't zoom in on focus. */
+  .input {
+    @apply h-10 w-full rounded-md border border-line bg-canvas px-3 text-base placeholder:text-muted focus:border-muted focus:outline-none sm:h-8 sm:px-2.5 sm:text-sm;
+  }
+  select.input {
+    @apply w-auto pr-6;
+  }
+  .textarea {
+    @apply w-full rounded-md border border-line bg-canvas px-3 py-2 text-base leading-6 sm:px-2.5 sm:text-sm placeholder:text-muted focus:border-muted focus:outline-none;
+  }
+  .label {
+    @apply mb-1 block text-xs font-medium text-muted;
+  }
+  .error {
+    @apply mt-1 text-xs text-danger;
+  }
+  .notice {
+    @apply rounded-md border border-line bg-subtle px-3 py-2 text-sm;
+  }
+  .link {
+    @apply underline decoration-line underline-offset-2 hover:decoration-ink;
+  }
+  .chip {
+    @apply inline-flex items-center rounded border border-line px-1.5 text-[11px] leading-[18px] text-muted;
+  }
+  .menu {
+    @apply absolute right-0 z-10 mt-1 max-w-[calc(100vw-2rem)] min-w-48 rounded-md border border-line bg-canvas py-1 shadow-sm;
+  }
+  .menu-item {
+    @apply block w-full px-3 py-2.5 text-left text-sm hover:bg-subtle sm:py-1.5;
+  }
+
+  .prose-ft {
+    @apply text-sm leading-6 break-words;
+  }
+  .prose-ft > * + * {
+    @apply mt-3;
+  }
+  .prose-ft a {
+    @apply underline decoration-muted underline-offset-2 hover:decoration-ink;
+  }
+  .prose-ft ul {
+    @apply list-disc pl-5;
+  }
+  .prose-ft ol {
+    @apply list-decimal pl-5;
+  }
+  .prose-ft h3,
+  .prose-ft h4,
+  .prose-ft h5,
+  .prose-ft h6 {
+    @apply font-semibold;
+  }
+  .prose-ft code {
+    @apply rounded bg-subtle px-1 py-0.5 font-mono text-[12.5px];
+  }
+  .prose-ft pre {
+    @apply overflow-x-auto rounded-md bg-subtle p-3;
+  }
+  .prose-ft pre code {
+    @apply bg-transparent p-0;
+  }
+  .prose-ft blockquote {
+    @apply border-l-2 border-line pl-3 text-muted;
+  }
+  .prose-ft hr {
+    @apply border-line;
+  }
+  .prose-ft table {
+    @apply block overflow-x-auto text-xs;
+  }
+  .prose-ft th,
+  .prose-ft td {
+    @apply border border-line px-2 py-1 text-left;
+  }
+}
+
+/* Text-sized links and buttons get a finger-sized hit area on touch screens. */
+@media (pointer: coarse) {
+  .btn-link::after {
+    content: "";
+    position: absolute;
+    inset: -10px -6px;
+  }
+}
+
+/* The row selected with j/k; the highlight bleeds into the page gutter. */
+.nav-item:has([data-nav-link]:focus) {
+  background: var(--c-subtle);
+  box-shadow: -0.5rem 0 var(--c-subtle), 0.5rem 0 var(--c-subtle);
+}
+.nav-item [data-nav-link]:focus-visible {
+  @apply outline-none underline underline-offset-2;
+}
+
+kbd {
+  @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-line bg-subtle px-1 font-mono text-[11px] leading-none text-ink;
+}
+
+.htmx-request.btn,
+.htmx-request .btn {
+  @apply opacity-60;
+}
+
+/* Release notes use h3 section headings; keep them small and tight. */
+.prose-changelog h3 {
+  @apply mt-4 text-xs font-semibold tracking-wide text-muted uppercase first:mt-0;
+}
+.prose-changelog ul {
+  @apply mt-1.5 space-y-0.5;
+}

@@ -1,0 +1,10 @@
+node_modules
+dist
+public/assets
+data
+backups
+*.db*
+.env
+.env.*
+.git
+tests

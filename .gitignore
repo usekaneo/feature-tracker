@@ -1,0 +1,12 @@
+node_modules/
+dist/
+public/assets/
+data/
+backups/
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
+!.env.example
+.DS_Store

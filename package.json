@@ -1,0 +1,48 @@
+{
+  "name": "kaneo-feature-track",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "bun": ">=1.3.12"
+  },
+  "scripts": {
+    "dev": "bun scripts/dev.ts",
+    "build": "bun scripts/build-assets.ts && bun build src/index.ts scripts/migrate.ts scripts/maintainer.ts scripts/backup.ts scripts/label-backfill.ts --target=bun --root=. --outdir=dist --minify-syntax --minify-whitespace",
+    "start": "NODE_ENV=production bun dist/src/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "bun scripts/migrate.ts",
+    "db:seed": "bun scripts/seed.ts",
+    "db:backup": "bun scripts/backup.ts",
+    "maintainer": "bun scripts/maintainer.ts",
+    "labels:backfill": "bun scripts/label-backfill.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "smoke:docker": "docker build -t kaneo-feature-track:check . && bun scripts/smoke-docker.ts",
+    "bench": "bun scripts/bench.ts"
+  },
+  "dependencies": {
+    "better-auth": "1.7.7",
+    "drizzle-orm": "0.45.3",
+    "hono": "4.13.13",
+    "marked": "18.1.0",
+    "nodemailer": "10.0.15",
+    "sanitize-html": "2.18.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/node": "4.3.3",
+    "@tailwindcss/oxide": "4.3.3",
+    "@types/bun": "1.4.2",
+    "@types/nodemailer": "8.0.2",
+    "@types/sanitize-html": "2.16.2",
+    "drizzle-kit": "0.31.11",
+    "geist": "1.7.2",
+    "htmx.org": "2.0.11",
+    "tailwindcss": "4.3.3",
+    "typescript": "7.0.2"
+  },
+  "overrides": {
+    "esbuild": "0.28.2"
+  }
+}
