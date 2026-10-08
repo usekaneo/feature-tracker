@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "bun scripts/dev.ts",
-    "build": "bun scripts/build-assets.ts && bun build src/index.ts scripts/migrate.ts scripts/maintainer.ts scripts/backup.ts scripts/label-backfill.ts --target=bun --root=. --outdir=dist --minify-syntax --minify-whitespace",
+    "build": "bun scripts/build-assets.ts && bun build src/index.ts scripts/migrate.ts scripts/maintainer.ts scripts/backup.ts scripts/label-backfill.ts scripts/import-github.ts --target=bun --root=. --outdir=dist --minify-syntax --minify-whitespace",
     "start": "NODE_ENV=production bun dist/src/index.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun scripts/migrate.ts",
