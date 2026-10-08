@@ -1,4 +1,5 @@
-import type { Child } from "hono/jsx";
+import { jsx, type Child } from "hono/jsx";
+import { asset } from "../lib/assets";
 import { Field } from "./components";
 import { Layout } from "./layout";
 
@@ -13,13 +14,23 @@ function AuthShell(props: { title: string; children: Child }) {
   );
 }
 
+function Captcha(props: { enabled?: boolean }) {
+  if (!props.enabled) return null;
+  return <div class="space-y-2">
+    {jsx("cap-widget", { "data-cap-api-endpoint": "/captcha/", required: true })}
+    <noscript><p role="alert">Enable JavaScript to complete the bot check.</p></noscript>
+    <script src={asset("captcha.js")} defer />
+    <script src="/captcha/assets/widget.js" defer />
+  </div>;
+}
+
 function Message(props: { error?: string; notice?: string }) {
   if (props.error) return <p class="mb-4 rounded-md border border-danger/30 px-3 py-2 text-sm text-danger" role="alert">{props.error}</p>;
   if (props.notice) return <p class="notice mb-4">{props.notice}</p>;
   return null;
 }
 
-export function LoginPage(props: { next: string; github: boolean; email?: string; error?: string; notice?: string }) {
+export function LoginPage(props: { next: string; github: boolean; captcha?: boolean; email?: string; error?: string; notice?: string }) {
   const nextQs = props.next !== "/" ? `?next=${encodeURIComponent(props.next)}` : "";
   return (
     <AuthShell title="Sign in">
@@ -53,6 +64,7 @@ export function LoginPage(props: { next: string; github: boolean; email?: string
         <Field label="Password" name="password">
           <input id="password" name="password" type="password" class="input" autocomplete="current-password" required />
         </Field>
+        <Captcha enabled={props.captcha} />
         <button type="submit" class="btn btn-primary w-full">
           Sign in
         </button>
@@ -69,7 +81,7 @@ export function LoginPage(props: { next: string; github: boolean; email?: string
   );
 }
 
-export function RegisterPage(props: { next: string; name?: string; email?: string; error?: string }) {
+export function RegisterPage(props: { next: string; captcha?: boolean; name?: string; email?: string; error?: string }) {
   return (
     <AuthShell title="Create account">
       <Message error={props.error} />
@@ -84,6 +96,7 @@ export function RegisterPage(props: { next: string; name?: string; email?: strin
         <Field label="Password" name="password" hint="At least 8 characters.">
           <input id="password" name="password" type="password" class="input" minlength={8} maxlength={128} autocomplete="new-password" required />
         </Field>
+        <Captcha enabled={props.captcha} />
         <button type="submit" class="btn btn-primary w-full">
           Create account
         </button>
@@ -112,7 +125,7 @@ export function CheckEmailPage(props: { email: string }) {
   );
 }
 
-export function ForgotPasswordPage(props: { sent?: boolean; error?: string }) {
+export function ForgotPasswordPage(props: { sent?: boolean; captcha?: boolean; error?: string }) {
   return (
     <AuthShell title="Reset password">
       {props.sent ? (
@@ -124,6 +137,7 @@ export function ForgotPasswordPage(props: { sent?: boolean; error?: string }) {
             <Field label="Email" name="email">
               <input id="email" name="email" type="email" class="input" autocomplete="email" required />
             </Field>
+            <Captcha enabled={props.captcha} />
             <button type="submit" class="btn btn-primary w-full">
               Send reset link
             </button>

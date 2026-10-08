@@ -1,3 +1,6 @@
+import { and, eq } from "drizzle-orm";
+import { APIError, createAuthMiddleware } from "better-auth/api";
+import { verifyCaptcha, type CaptchaFetch } from "../lib/captcha";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { Config } from "../config";
@@ -9,7 +12,7 @@ import type { Logger } from "../lib/logger";
 /** Header carrying the client IP resolved by the app; incoming values are always overwritten. */
 export const CLIENT_IP_HEADER = "x-ft-client-ip";
 
-export function createAuth(opts: { db: DB; config: Config; mailer: Mailer; logger: Logger }) {
+export function createAuth(opts: { db: DB; config: Config; mailer: Mailer; logger: Logger; captchaFetch?: CaptchaFetch }) {
   const { db, config, mailer, logger } = opts;
 
   const deliver = (to: string, subject: string, text: string) => {
@@ -17,7 +20,23 @@ export function createAuth(opts: { db: DB; config: Config; mailer: Mailer; logge
     mailer.send({ to, subject, text }).catch((error) => logger.error("Email delivery failed", error));
   };
 
+  const promote = (userId: string) => {
+    const owner = db.select().from(user).where(eq(user.id, userId)).get();
+    if (!owner?.emailVerified || owner.bannedAt) return;
+    const identities = db.select().from(account).where(and(eq(account.userId, userId), eq(account.providerId, "github"))).all();
+    if (identities.some(a => config.maintainerGithubIds.includes(a.accountId))) db.update(user).set({ role: "maintainer" }).where(eq(user.id, userId)).run();
+  };
   return betterAuth({
+    hooks: { before: createAuthMiddleware(async ctx => {
+      if (config.captcha && ["/sign-up/email", "/sign-in/email", "/request-password-reset", "/send-verification-email"].includes(ctx.path)) {
+        const valid = await verifyCaptcha(config.captcha, ctx.headers?.get("x-captcha-response") ?? "", opts.captchaFetch);
+        if (!valid) throw new APIError("FORBIDDEN", { code: "CAPTCHA_REQUIRED", message: "Complete the bot check and try again." });
+      }
+    }) },
+    databaseHooks: {
+      account: { create: { after: async a => { if (a.providerId === "github") promote(a.userId); } } },
+      session: { create: { before: async s => { promote(s.userId); return { data: s }; } } },
+    },
     appName: "Kaneo Feature Track",
     baseURL: config.appUrl,
     basePath: "/api/auth",

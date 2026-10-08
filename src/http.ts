@@ -70,8 +70,9 @@ export function clientIp(c: Ctx, trustProxy: boolean): string {
 }
 
 /** Request headers for Better Auth calls, with the resolved client IP. */
-export function authHeaders(c: Ctx): Headers {
+export function authHeaders(c: Ctx, captchaToken?: string): Headers {
   const headers = new Headers(c.req.raw.headers);
+  if (captchaToken !== undefined) headers.set("x-captcha-response", captchaToken);
   headers.set(CLIENT_IP_HEADER, c.get("ip"));
   return headers;
 }

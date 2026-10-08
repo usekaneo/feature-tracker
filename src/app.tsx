@@ -6,6 +6,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { authHeaders, clientIp, loadSession, noStore, requireCsrfToken, type AppEnv, type Deps } from "./http";
 import { PUBLIC_DIR } from "./lib/assets";
 import { loggablePath } from "./lib/logger";
+import { captchaRoutes } from "./routes/captcha";
 import { authRoutes } from "./routes/auth";
 import { changelogRoutes } from "./routes/changelog";
 import { feedRoutes } from "./routes/feed";
@@ -34,8 +35,9 @@ export function createApp(deps: Deps) {
     secureHeaders({
       contentSecurityPolicy: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
+        scriptSrc: ["'self'", ...(config.captcha ? ["'wasm-unsafe-eval'"] : [])],
         styleSrc: ["'self'"],
+        ...(config.captcha ? { styleSrcElem: ["'self'", "'unsafe-inline'"], workerSrc: ["'self'", "blob:"] } : {}),
         imgSrc: ["'self'", "data:"],
         fontSrc: ["'self'"],
         connectSrc: ["'self'"],
@@ -67,14 +69,18 @@ export function createApp(deps: Deps) {
     await next();
   });
 
-  // Better Auth endpoints: OAuth callbacks, email verification and reset links.
-  app.on(["GET", "POST"], "/api/auth/*", (c) => {
-    c.header("Cache-Control", "no-store");
-    return deps.auth.handler(new Request(c.req.raw, { headers: authHeaders(c) }));
-  });
-
   // Largest legitimate form is a 20k-character description.
   app.use("*", bodyLimit({ maxSize: 128 * 1024, onError: (c) => c.text("Request too large.", 413) }));
+
+  app.route("/captcha", captchaRoutes());
+
+  // Better Auth endpoints: OAuth callbacks, email verification and reset links.
+  app.on(["GET", "POST"], "/api/auth/*", async (c) => {
+    c.header("Cache-Control", "no-store");
+    return deps.auth.handler(new Request(c.req.url, { method: c.req.method, headers: authHeaders(c),
+      ...(c.req.method === "POST" ? { body: await c.req.arrayBuffer() } : {}) }));
+  });
+
   // Origin / Fetch Metadata check for all form writes, signed in or not.
   app.use("*", csrf({ origin: appOrigin }));
   app.use("*", loadSession());

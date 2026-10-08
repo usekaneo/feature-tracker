@@ -1,3 +1,4 @@
+import type { CaptchaFetch } from "./lib/captcha";
 import { createAuth } from "./auth/auth";
 import type { Config } from "./config";
 import { createDb } from "./db/client";
@@ -14,12 +15,12 @@ import type { LabelerFetch } from "./labeler/assess";
 
 export function createDeps(
   config: Config,
-  overrides: { logger?: Logger; mailer?: Mailer; githubFetch?: FetchLike; labelerFetch?: LabelerFetch; now?: () => number } = {},
+  overrides: { captchaFetch?: CaptchaFetch; logger?: Logger; mailer?: Mailer; githubFetch?: FetchLike; labelerFetch?: LabelerFetch; now?: () => number } = {},
 ): Deps {
   const logger = overrides.logger ?? consoleLogger;
   const { db, sqlite } = createDb(config.databasePath);
   const mailer = overrides.mailer ?? createMailer(config.mail, logger);
-  const auth = createAuth({ db, config, mailer, logger });
+  const auth = createAuth({ db, config, mailer, logger, captchaFetch: overrides.captchaFetch });
   const client = config.repo ? new GitHubClient(config.repo, overrides.githubFetch) : null;
   const notifier = new NotificationEmails({ db, mailer, appUrl: config.appUrl, secret: config.authSecret, logger, now: overrides.now });
   const issues = new GitHubSync({ db, client, appUrl: config.appUrl, logger, now: overrides.now, onNotify: () => notifier.kick() });

@@ -12,7 +12,7 @@ import { silentLogger } from "../src/lib/logger";
 export const ORIGIN = "http://localhost:3000";
 export const PASSWORD = "correct horse battery";
 
-export function setup(env: Record<string, string> = {}, opts: { githubFetch?: FetchLike; labelerFetch?: LabelerFetch; now?: () => number } = {}) {
+export function setup(env: Record<string, string> = {}, opts: { captchaFetch?: import("../src/lib/captcha").CaptchaFetch; githubFetch?: FetchLike; labelerFetch?: LabelerFetch; now?: () => number } = {}) {
   const config = loadConfig({
     NODE_ENV: "test",
     APP_URL: ORIGIN,
@@ -23,7 +23,7 @@ export function setup(env: Record<string, string> = {}, opts: { githubFetch?: Fe
     TRUST_PROXY: "true",
     ...env,
   });
-  const deps = createDeps(config, { logger: silentLogger, githubFetch: opts.githubFetch, labelerFetch: opts.labelerFetch, now: opts.now });
+  const deps = createDeps(config, { logger: silentLogger, captchaFetch: opts.captchaFetch, githubFetch: opts.githubFetch, labelerFetch: opts.labelerFetch, now: opts.now });
   runMigrations(deps.db);
   const app = createApp(deps);
   return { deps, app, browser: () => new Browser(app) };

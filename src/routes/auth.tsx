@@ -20,7 +20,7 @@ export function authRoutes() {
     const next = safeNext(c.req.query("next"));
     if (c.get("viewer")) return c.redirect(next);
     const error = c.req.query("error") ? "GitHub sign-in didn't complete. Try again." : undefined;
-    return c.html(<LoginPage next={next} github={!!c.get("deps").config.github} error={error} />);
+    return c.html(<LoginPage captcha={!!c.get("deps").config.captcha} next={next} github={!!c.get("deps").config.github} error={error} />);
   });
 
   app.post("/login", async (c) => {
@@ -30,7 +30,7 @@ export function authRoutes() {
     const password = typeof body.password === "string" ? body.password : "";
     const next = safeNext(formString(body, "next"));
     const render = (error: string, status: 400 | 401 | 403 | 429) =>
-      c.html(<LoginPage next={next} github={!!config.github} email={email} error={error} />, status);
+      c.html(<LoginPage captcha={!!c.get("deps").config.captcha} next={next} github={!!config.github} email={email} error={error} />, status);
 
     const blocked = limits.signIn.hit(`ip:${c.get("ip")}`);
     if (!blocked.ok) return render("Too many attempts. Try again in a few minutes.", 429);
@@ -39,12 +39,13 @@ export function authRoutes() {
     try {
       const { headers } = await auth.api.signInEmail({
         body: { email, password, callbackURL: verifiedCallback(next) },
-        headers: authHeaders(c),
+        headers: authHeaders(c, formString(body, "cap-token")),
         returnHeaders: true,
       });
       forwardCookies(c, headers);
       return c.redirect(next, 303);
     } catch (error) {
+      if (errorCode(error) === "CAPTCHA_REQUIRED") return render("Complete the bot check and try again.", 403);
       if (errorCode(error) === "EMAIL_NOT_VERIFIED") return render("Verify your email first. We sent you a new link.", 403);
       if (error instanceof APIError) return render("Wrong email or password.", 401);
       throw error;
@@ -69,7 +70,7 @@ export function authRoutes() {
   app.get("/register", (c) => {
     const next = safeNext(c.req.query("next"));
     if (c.get("viewer")) return c.redirect(next);
-    return c.html(<RegisterPage next={next} />);
+    return c.html(<RegisterPage captcha={!!c.get("deps").config.captcha} next={next} />);
   });
 
   app.post("/register", async (c) => {
@@ -79,7 +80,7 @@ export function authRoutes() {
     const email = formString(body, "email").toLowerCase();
     const password = typeof body.password === "string" ? body.password : "";
     const next = safeNext(formString(body, "next"));
-    const render = (error: string, status: 400 | 429) => c.html(<RegisterPage next={next} name={name} email={email} error={error} />, status);
+    const render = (error: string, status: 400 | 429) => c.html(<RegisterPage captcha={!!c.get("deps").config.captcha} next={next} name={name} email={email} error={error} />, status);
 
     if (!limits.signUp.hit(`ip:${c.get("ip")}`).ok) return render("Too many sign-ups from your network. Try again later.", 429);
     if (!name) return render("Enter your name.", 400);
@@ -90,10 +91,11 @@ export function authRoutes() {
     try {
       await auth.api.signUpEmail({
         body: { name, email, password, callbackURL: verifiedCallback(next) },
-        headers: authHeaders(c),
+        headers: authHeaders(c, formString(body, "cap-token")),
       });
     } catch (error) {
       const code = errorCode(error);
+      if (code === "CAPTCHA_REQUIRED") return render("Complete the bot check and try again.", 400);
       if (code === "INVALID_EMAIL") return render("Enter a valid email.", 400);
       if (code === "PASSWORD_TOO_SHORT") return render("Password must be at least 8 characters.", 400);
       if (code === "PASSWORD_TOO_LONG") return render("Password is too long.", 400);
@@ -113,22 +115,23 @@ export function authRoutes() {
     return c.redirect(safeNext(c.req.query("next")));
   });
 
-  app.get("/forgot-password", (c) => c.html(<ForgotPasswordPage />));
+  app.get("/forgot-password", (c) => c.html(<ForgotPasswordPage captcha={!!c.get("deps").config.captcha} />));
 
   app.post("/forgot-password", async (c) => {
     const { auth, limits } = c.get("deps");
     const body = await c.req.parseBody();
     const email = formString(body, "email").toLowerCase();
     if (!limits.emailLink.hit(`ip:${c.get("ip")}`).ok) {
-      return c.html(<ForgotPasswordPage error="Too many requests. Try again later." />, 429);
+      return c.html(<ForgotPasswordPage captcha={!!c.get("deps").config.captcha} error="Too many requests. Try again later." />, 429);
     }
-    if (!email) return c.html(<ForgotPasswordPage error="Enter your email." />, 400);
+    if (!email) return c.html(<ForgotPasswordPage captcha={!!c.get("deps").config.captcha} error="Enter your email." />, 400);
     try {
-      await auth.api.requestPasswordReset({ body: { email, redirectTo: "/reset-password" }, headers: authHeaders(c) });
+      await auth.api.requestPasswordReset({ body: { email, redirectTo: "/reset-password" }, headers: authHeaders(c, formString(body, "cap-token")) });
     } catch (error) {
+      if (errorCode(error) === "CAPTCHA_REQUIRED") return c.html(<ForgotPasswordPage captcha={!!c.get("deps").config.captcha} error="Complete the bot check and try again." />, 403);
       if (!(error instanceof APIError)) throw error;
     }
-    return c.html(<ForgotPasswordPage sent />);
+    return c.html(<ForgotPasswordPage captcha={!!c.get("deps").config.captcha} sent />);
   });
 
   app.get("/reset-password", (c) => {
@@ -152,7 +155,7 @@ export function authRoutes() {
       if (error instanceof APIError) return c.html(<ResetPasswordPage token="" />, 400);
       throw error;
     }
-    return c.html(<LoginPage next="/" github={!!c.get("deps").config.github} notice="Password updated. Sign in with your new password." />);
+    return c.html(<LoginPage captcha={!!c.get("deps").config.captcha} next="/" github={!!c.get("deps").config.github} notice="Password updated. Sign in with your new password." />);
   });
 
   app.post("/logout", async (c: Ctx) => {

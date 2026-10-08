@@ -163,8 +163,8 @@ describe("GitHub", () => {
     expect((await ctx.browser().post("/login/github", {})).headers.get("location")).toBe("/login");
   });
 
-  test("OAuth redirect and callback create a verified account and session", async () => {
-    const ctx = setup({ GITHUB_CLIENT_ID: "gh-client", GITHUB_CLIENT_SECRET: "gh-secret" });
+  test.each([["4242", "user"], ["44305048", "maintainer"], ["176929823", "maintainer"], ["127273550", "maintainer"]] as const)("OAuth identity %s gets role %s", async (githubId, expectedRole) => {
+    const ctx = setup({ GITHUB_CLIENT_ID: "gh-client", GITHUB_CLIENT_SECRET: "gh-secret", MAINTAINER_GITHUB_IDS: "44305048,176929823,127273550" });
     const b = ctx.browser();
     expect(await (await b.get("/login")).text()).toContain("Continue with GitHub");
 
@@ -184,7 +184,7 @@ describe("GitHub", () => {
         return Response.json({ access_token: "gho_test", token_type: "bearer", scope: "read:user,user:email" });
       }
       if (url === "https://api.github.com/user") {
-        return Response.json({ id: 4242, login: "octo", name: "Octo Cat", email: null, avatar_url: "https://avatars.example/octo" });
+        return Response.json({ id: Number(githubId), login: "octo", name: "Octo Cat", email: null, avatar_url: "https://avatars.example/octo" });
       }
       if (url === "https://api.github.com/user/emails") {
         return Response.json([{ email: "octo@example.com", primary: true, verified: true, visibility: "private" }]);
@@ -200,7 +200,7 @@ describe("GitHub", () => {
     const row = ctx.deps.db.select().from(user).where(eq(user.email, "octo@example.com")).get()!;
     expect(row.name).toBe("Octo Cat");
     expect(row.emailVerified).toBe(true);
-    expect(row.role).toBe("user");
+    expect(row.role).toBe(expectedRole);
     const linked = ctx.deps.db.select().from(account).where(eq(account.userId, row.id)).get()!;
     expect(linked.providerId).toBe("github");
     expect(await (await b.get("/requests/new")).text()).toContain("New request");

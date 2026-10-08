@@ -49,6 +49,8 @@ export interface Config {
   databasePath: string;
   authSecret: string;
   github: { clientId: string; clientSecret: string } | null;
+  maintainerGithubIds: string[];
+  captcha: { serverUrl: string; siteKey: string; secretKey: string } | null;
   mail: MailConfig;
   /** Repository where accepted requests become issues. */
   repo: RepoConfig | null;
@@ -102,6 +104,17 @@ export function loadConfig(source: Record<string, string | undefined> = process.
   const githubId = get("GITHUB_CLIENT_ID");
   const githubSecret = get("GITHUB_CLIENT_SECRET");
   const github = githubId && githubSecret ? { clientId: githubId, clientSecret: githubSecret } : null;
+
+  const maintainerGithubIds = (get("MAINTAINER_GITHUB_IDS") ?? "").split(",").map(v => v.trim()).filter(Boolean);
+  if (maintainerGithubIds.some(v => !/^[1-9]\d*$/.test(v))) problems.push("MAINTAINER_GITHUB_IDS must be numeric GitHub account IDs");
+  const capUrl = get("CAP_SERVER_URL"), capSite = get("CAP_SITE_KEY"), capSecret = get("CAP_SECRET_KEY");
+  const captcha = capUrl && capSite && capSecret ? { serverUrl: trimSlash(capUrl), siteKey: capSite, secretKey: capSecret } : null;
+  if ([capUrl, capSite, capSecret].some(Boolean) && !captcha) problems.push("Set CAP_SERVER_URL, CAP_SITE_KEY and CAP_SECRET_KEY together");
+  if (captcha) {
+    try { const u = new URL(captcha.serverUrl); if (!["http:", "https:"].includes(u.protocol) || u.username || u.password || u.search || u.hash) throw new Error(); }
+    catch { problems.push("CAP_SERVER_URL must be an HTTP URL without credentials, query or fragment"); }
+    if (!/^[a-f0-9]{10}$/.test(captcha.siteKey)) problems.push("CAP_SITE_KEY must be a CAP site identifier");
+  }
 
   const from = get("MAIL_FROM") ?? "Kaneo Feature Track <no-reply@localhost>";
   if (isProd && !get("MAIL_FROM")) problems.push("MAIL_FROM is required in production");
@@ -204,6 +217,8 @@ export function loadConfig(source: Record<string, string | undefined> = process.
     databasePath,
     authSecret,
     github,
+    maintainerGithubIds,
+    captcha,
     mail,
     repo,
     changelog,

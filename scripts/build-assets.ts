@@ -8,7 +8,7 @@ const out = join(root, "public/assets");
 mkdirSync(out, { recursive: true });
 copyFileSync(join(root, "node_modules/htmx.org/dist/htmx.min.js"), join(out, "htmx.min.js"));
 copyFileSync(join(root, "node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2"), join(out, "geist.woff2"));
-const CLIENT_SCRIPTS = ["theme.js", "keys.js"];
+const CLIENT_SCRIPTS = ["theme.js", "keys.js", "captcha.js"];
 async function build() {
   const input = join(root, "src/styles/app.css");
   const compiler = await compile(await Bun.file(input).text(), { base: dirname(input), onDependency() {} });
