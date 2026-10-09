@@ -185,7 +185,7 @@ export function loadConfig(source: Record<string, string | undefined> = process.
       }
     : null;
 
-  const labelContext = get("AUTO_LABEL_CONTEXT") ?? "Kaneo is an open-source project management app. This board collects feature requests for Kaneo and its MCP server. Classify the requested change and the demonstrated user problem.";
+  const labelContext = get("AUTO_LABEL_CONTEXT") ?? "Kaneo is an open-source project management app. This board collects feature requests for Kaneo and its MCP server. Organize requests by the product areas they concern.";
   const openrouterKey = get("OPENROUTER_API_KEY");
   const typesafeKey = get("TYPESAFE_API_KEY");
   const labeler: LabelerConfig | null = get("AUTO_LABEL_ENABLED") === "false" ? null

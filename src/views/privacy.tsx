@@ -58,7 +58,7 @@ export function PrivacyPage(props: Pick<PageProps, "viewer" | "csrf" | "canonica
             </li>
             <li>
               When automated labeling is enabled, OpenRouter or TypeSafe receives the request title, up to the first 12,000 characters of its description,
-              project context, and area label names to suggest categories and priorities. Account details, comments, and votes are not included in this
+              project context, and topic label names to suggest relevant topics. Account details, comments, and votes are not included in this
               submission, but personal information you put in a title or description will be included. Maintainers can review and override these labels;
               accepting or declining a request is a maintainer decision.
             </li>

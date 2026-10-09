@@ -187,7 +187,7 @@ export const autoLabelJob = sqliteTable(
     leaseUntil: timestamp("lease_until"),
     manualOverride: flag("manual_override"),
     managedLabelIds: text("managed_label_ids", { mode: "json" }).$type<number[]>().notNull().default(sql`'[]'`),
-    assessment: text("assessment", { mode: "json" }).$type<import("../labeler/assess").Scored>(),
+    assessment: text("assessment", { mode: "json" }).$type<import("../labeler/assess").TopicAssessment>(),
     lastError: text("last_error"),
     updatedAt: timestamp("updated_at").notNull().default(now),
   },

@@ -4,7 +4,7 @@ import type { LabelerConfig } from "../config";
 import type { DB } from "../db/client";
 import { autoLabelJob, label, request, requestLabel } from "../db/schema";
 import type { Logger } from "../lib/logger";
-import { assessRequest, isManagedName, LabelerError, suggestedNames, type LabelerFetch, type Scored } from "./assess";
+import { assessRequest, isManagedName, LabelerError, suggestedNames, type LabelerFetch, type TopicAssessment } from "./assess";
 
 type Tx = Parameters<Parameters<DB["transaction"]>[0]>[0];
 const LEASE_MS = 60_000;
@@ -118,7 +118,7 @@ export class AutoLabeler {
     }
   }
 
-  private apply(tx: Tx, requestId: number, previous: number[], scored: Scored) {
+  private apply(tx: Tx, requestId: number, previous: number[], scored: TopicAssessment) {
     // Only remove labels we actually added. Unrelated labels always survive a re-score.
     if (previous.length) tx.delete(requestLabel).where(and(eq(requestLabel.requestId, requestId), inArray(requestLabel.labelId, previous))).run();
     const ids: number[] = [];
@@ -127,7 +127,6 @@ export class AutoLabeler {
       const found = tx.select({ id: label.id }).from(label).where(sql`${label.name} = ${name} collate nocase`).get();
       if (found) ids.push(found.id);
     }
-    if (scored.areaId && tx.select({ id: label.id }).from(label).where(eq(label.id, scored.areaId)).get()) ids.push(scored.areaId);
     const managed: number[] = [];
     for (const labelId of ids) {
       const added = tx.insert(requestLabel).values({ requestId, labelId }).onConflictDoNothing().returning().get();

@@ -323,9 +323,8 @@ function MaintainerPanel(props: PageProps) {
               </>
             )}
           </div>
-          {req.labeling?.assessment && <p>
-            {req.labeling.assessment.band} priority ({req.labeling.assessment.priority}/100) · {req.labeling.assessment.assessment.category.choice}
-            {req.labeling.assessment.reviewReasons.length > 0 && ` · Review: ${req.labeling.assessment.reviewReasons.join(" ")}`}
+          {req.labeling?.assessment?.topics && <p>
+            {req.labeling.assessment.topics.length ? `Topics: ${req.labeling.assessment.topics.map(t => t.name).join(", ")}` : "No matching topic identified"}
           </p>}
           {req.labeling?.lastError && <p class="text-danger">{req.labeling.lastError}</p>}
           {props.autoLabelEnabled && <p>Saving labels preserves your choice through future edits. Re-running replaces previous automatic labels.</p>}

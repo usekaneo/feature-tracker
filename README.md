@@ -44,7 +44,7 @@ Optional integrations:
 
 - **GitHub sign-in:** set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. Callback: `<APP_URL>/api/auth/callback/github`.
 - **GitHub issues:** set `GITHUB_REPO` and `GITHUB_TOKEN` with Issues read/write, Contents read, and Pull requests read.
-- **Auto-labeling:** set `OPENROUTER_API_KEY` or `TYPESAFE_API_KEY`. The provider receives request titles and descriptions.
+- **Auto-labeling:** set `OPENROUTER_API_KEY` or `TYPESAFE_API_KEY`. The provider receives request titles and descriptions and selects up to two product topics, such as Integrations, Notifications or Recurring tasks. Existing custom topic labels are also available. Maintainer choices survive edits; explicit reruns replace only previous automatic labels.
 
 ## Administration
 
