@@ -212,7 +212,7 @@ describe("durable auto-labeler", () => {
     ctx.deps.sqlite.close();
   });
 
-  test("invalid topics fail and low-confidence choices create no labels", async () => {
+  test("invalid topics fail; a split-confidence primary survives while weak secondary topics are skipped", async () => {
     const invalid = await fixture(async () => decision({ primary_topic: { type: "choice", choice: "arbitrary", confidence: .9 } }));
     await invalid.deps.labeler.processDue();
     expect(job(invalid).state).toBe("failed");
@@ -221,9 +221,9 @@ describe("durable auto-labeler", () => {
     const uncertain = await fixture(async () => decision({ primary_topic: { type: "choice", choice: "tasks", confidence: .4 }, secondary_topic: { type: "choice", choice: "label:1", confidence: .5 } }));
     area(uncertain, "Board");
     await uncertain.deps.labeler.processDue();
-    expect(names(uncertain)).toEqual([]);
+    expect(names(uncertain)).toEqual(["Tasks & subtasks"]);
     expect(job(uncertain).state).toBe("done");
-    expect(job(uncertain).assessment!.topics).toEqual([]);
+    expect(job(uncertain).assessment!.topics.map(t => t.choice)).toEqual(["tasks"]);
     uncertain.deps.sqlite.close();
   });
 

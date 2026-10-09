@@ -87,10 +87,12 @@ export async function assessRequest(
   const parsed = decisionResponse.safeParse(raw);
   if (!parsed.success) throw new LabelerError("The labeling provider returned an invalid topic assessment.");
   const topics: TopicAssessment["topics"] = [];
-  for (const selected of [parsed.data.answers.primary_topic, parsed.data.answers.secondary_topic]) {
+  for (const [index, selected] of [parsed.data.answers.primary_topic, parsed.data.answers.secondary_topic].entries()) {
     const topic = choices.get(selected.choice);
     if (selected.choice !== "none" && !topic) throw new LabelerError("The labeling provider returned an invalid topic.");
-    if (topic && selected.confidence >= .7 && !topics.some(t => t.choice === selected.choice)) {
+    // Overlapping areas can split confidence in a valid primary subject. Only
+    // optional secondary topics need the higher confidence threshold.
+    if (topic && (index === 0 || selected.confidence >= .7) && !topics.some(t => t.choice === selected.choice)) {
       topics.push({ choice: selected.choice, name: topic.name, confidence: selected.confidence });
     }
   }
